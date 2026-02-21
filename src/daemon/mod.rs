@@ -225,6 +225,7 @@ fn has_supervised_channels(config: &Config) -> bool {
         lark,
         dingtalk,
         linq,
+        nextcloud_talk,
         qq,
         ..
     } = &config.channels_config;
@@ -242,6 +243,7 @@ fn has_supervised_channels(config: &Config) -> bool {
         || lark.is_some()
         || dingtalk.is_some()
         || linq.is_some()
+        || nextcloud_talk.is_some()
         || qq.is_some()
 }
 
@@ -321,6 +323,7 @@ mod tests {
             allowed_users: vec![],
             stream_mode: crate::config::StreamMode::default(),
             draft_update_interval_ms: 1000,
+            interrupt_on_new_message: false,
             mention_only: false,
         });
         assert!(has_supervised_channels(&config));
@@ -357,6 +360,18 @@ mod tests {
         config.channels_config.qq = Some(crate::config::schema::QQConfig {
             app_id: "app-id".into(),
             app_secret: "app-secret".into(),
+            allowed_users: vec!["*".into()],
+        });
+        assert!(has_supervised_channels(&config));
+    }
+
+    #[test]
+    fn detects_nextcloud_talk_as_supervised_channel() {
+        let mut config = Config::default();
+        config.channels_config.nextcloud_talk = Some(crate::config::schema::NextcloudTalkConfig {
+            base_url: "https://cloud.example.com".into(),
+            app_token: "app-token".into(),
+            webhook_secret: None,
             allowed_users: vec!["*".into()],
         });
         assert!(has_supervised_channels(&config));
