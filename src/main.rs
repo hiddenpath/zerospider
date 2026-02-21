@@ -53,7 +53,7 @@ mod approval;
 mod auth;
 mod channels;
 mod rag {
-    pub use zeroclaw::rag::*;
+    pub use zerospider::rag::*;
 }
 mod config;
 mod cron;
@@ -83,15 +83,15 @@ mod util;
 
 use config::Config;
 
-// Re-export so binary's hardware/peripherals modules can use crate::HardwareCommands etc.
-pub use zeroclaw::{HardwareCommands, PeripheralCommands};
+// Re-export so binary's hardware/peripherals modules can use zerospider::HardwareCommands etc.
+pub use zerospider::{HardwareCommands, PeripheralCommands};
 
-/// `ZeroClaw` - Zero overhead. Zero compromise. 100% Rust.
+/// `ZeroSpider` - Protocol-driven autonomous AI agent runtime.
 #[derive(Parser, Debug)]
-#[command(name = "zeroclaw")]
-#[command(author = "theonlyhennygod")]
+#[command(name = "zerospider")]
+#[command(author = "Luqiang Wang")]
 #[command(version = "0.1.0")]
-#[command(about = "The fastest, smallest AI assistant.", long_about = None)]
+#[command(about = "Protocol-driven autonomous AI agent runtime with intelligent model selection.", long_about = None)]
 struct Cli {
     #[arg(long, global = true)]
     config_dir: Option<String>,
@@ -354,7 +354,7 @@ Examples:
   zeroclaw hardware info --chip STM32F401RETx")]
     Hardware {
         #[command(subcommand)]
-        hardware_command: zeroclaw::HardwareCommands,
+        hardware_command: zerospider::HardwareCommands,
     },
 
     /// Manage hardware peripherals (STM32, RPi GPIO, etc.)
@@ -373,7 +373,7 @@ Examples:
   zeroclaw peripheral flash-nucleo")]
     Peripheral {
         #[command(subcommand)]
-        peripheral_command: zeroclaw::PeripheralCommands,
+        peripheral_command: zerospider::PeripheralCommands,
     },
 
     /// Manage agent memory (list, get, stats, clear)
