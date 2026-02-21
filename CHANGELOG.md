@@ -39,6 +39,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restored AGENTS.md and CLAUDE.md as functional documentation
 - Updated README with ZeroSpider branding
 
+## [0.2.0] - 2026-02-21
+
+### Added
+- **Dashboard**: `GET /dashboard` and `GET /api/dashboard` for monitoring status, cost, and runtime
+- **ai-protocol feature**: ai-lib-rust from crates.io (v0.8), protocol providers via `protocol:provider/model`
+- **README**: Aligned EN/ZH, added dashboard and dependency source docs
+
+### Changed
+- **Dependencies**: ai-lib-rust now from crates.io (was path); ai-protocol remains env-based (clone from GitHub)
+- **User Guide**: Aligned docs to ZeroSpider branding (ZeroClaw → ZeroSpider, zeroclaw → zerospider, ~/.zeroclaw → ~/.zerospider)
+
 ## [Unreleased]
 
 ### Security
@@ -92,4 +103,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Workspace escape prevention
 - Forbidden system path protection (`/etc`, `/root`, `~/.ssh`)
 
+[0.2.0]: https://github.com/hiddenpath/zerospider/releases/tag/v0.2.0
+[0.1.1]: https://github.com/hiddenpath/zerospider/releases/tag/v0.1.1
 [0.1.0]: https://github.com/theonlyhennygod/zeroclaw/releases/tag/v0.1.0

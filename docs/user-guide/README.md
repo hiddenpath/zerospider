@@ -1,6 +1,6 @@
-# ZeroClaw 用户指南
+# ZeroSpider 用户指南
 
-欢迎！这是 ZeroClaw 的完整使用指南，适合所有用户阅读。
+欢迎！这是 ZeroSpider 的完整使用指南，适合所有用户阅读。
 
 ## 目录
 
@@ -47,11 +47,11 @@
 
 ---
 
-## 关于 ZeroClaw
+## 关于 ZeroSpider
 
-### ZeroClaw 是什么？
+### ZeroSpider 是什么？
 
-ZeroClaw 是一个 **AI 助手平台**，可以帮你：
+ZeroSpider 是一个 **AI 助手平台**，可以帮你：
 
 - 💬 **聊天对话** - 和各种 AI 模型交流
 - 🔧 **执行任务** - 文件操作、网页搜索、运行代码等
@@ -59,7 +59,7 @@ ZeroClaw 是一个 **AI 助手平台**，可以帮你：
 - 🤖 **自动化** - 定时执行任务，自动处理消息
 - 🔌 **连接硬件** - 控制树莓派、Arduino 等设备
 
-### 为什么选择 ZeroClaw？
+### 为什么选择 ZeroSpider？
 
 | 特点 | 说明 |
 |------|------|
@@ -94,5 +94,5 @@ ZeroClaw 是一个 **AI 助手平台**，可以帮你：
 
 ---
 
-*版本：feat/ai-protocol-integration*
+*版本：v0.2.0*
 *更新日期：2026-02-20*

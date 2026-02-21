@@ -29,6 +29,9 @@ pub mod reliable;
 pub mod router;
 pub mod traits;
 
+#[cfg(feature = "ai-protocol")]
+pub mod protocol_adapter;
+
 #[allow(unused_imports)]
 pub use traits::{
     ChatMessage, ChatRequest, ChatResponse, ConversationMessage, Provider, ProviderCapabilityError,
@@ -1134,6 +1137,27 @@ fn create_provider_with_url_and_options(
             key,
         ))),
 
+        // ── Protocol-driven provider (ai-lib-rust, requires ai-protocol feature) ──
+        // Format: "protocol:provider_id/model_id" e.g. "protocol:openai/gpt-4o"
+        #[cfg(feature = "ai-protocol")]
+        name if name.starts_with("protocol:") => {
+            let rest = name.strip_prefix("protocol:").unwrap_or("").trim();
+            let (provider_id, model_id) = rest
+                .split_once('/')
+                .map(|(p, m)| (p.trim(), m.trim()))
+                .filter(|(p, m)| !p.is_empty() && !m.is_empty())
+                .ok_or_else(|| {
+                    anyhow::anyhow!(
+                        "Protocol provider format: protocol:provider_id/model_id (e.g. protocol:openai/gpt-4o)"
+                    )
+                })?;
+            Ok(Box::new(protocol_adapter::ProtocolBackedProvider::new(
+                provider_id,
+                model_id,
+                key,
+            )?))
+        }
+
         // ── Bring Your Own Provider (custom URL) ───────────
         // Format: "custom:https://your-api.com" or "custom:http://localhost:1234"
         name if name.starts_with("custom:") => {
@@ -1164,10 +1188,18 @@ fn create_provider_with_url_and_options(
             )))
         }
 
+        #[cfg(not(feature = "ai-protocol"))]
+        name if name.starts_with("protocol:") => {
+            anyhow::bail!(
+                "Protocol provider requires --features ai-protocol. Build with: cargo build --features ai-protocol"
+            )
+        }
+
         _ => anyhow::bail!(
             "Unknown provider: {name}. Check README for supported providers or run `zeroclaw onboard --interactive` to reconfigure.\n\
              Tip: Use \"custom:https://your-api.com\" for OpenAI-compatible endpoints.\n\
-             Tip: Use \"anthropic-custom:https://your-api.com\" for Anthropic-compatible endpoints."
+             Tip: Use \"anthropic-custom:https://your-api.com\" for Anthropic-compatible endpoints.\n\
+             Tip: Use \"protocol:provider/model\" for ai-protocol providers (requires --features ai-protocol)."
         ),
     }
 }

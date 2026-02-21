@@ -4,7 +4,7 @@ resolver = "2"
 
 [package]
 name = "zerospider"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 authors = ["Luqiang Wang"]
 license = "MIT OR Apache-2.0"
@@ -170,6 +170,9 @@ landlock = { version = "0.4", optional = true }
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
 
+# ai-lib-rust — Protocol-driven AI API client (crates.io, optional)
+ai-lib-rust = { version = "0.8", optional = true, features = ["embeddings", "batch", "telemetry"] }
+
 [features]
 default = []
 hardware = ["nusb", "tokio-serial"]
@@ -193,6 +196,8 @@ probe = ["dep:probe-rs"]
 rag-pdf = ["dep:pdf-extract"]
 # whatsapp-web = Native WhatsApp Web client with custom rusqlite storage backend
 whatsapp-web = ["dep:wa-rs", "dep:wa-rs-core", "dep:wa-rs-binary", "dep:wa-rs-proto", "dep:wa-rs-ureq-http", "dep:wa-rs-tokio-transport", "dep:serde-big-array", "dep:prost"]
+# ai-protocol = Protocol-driven providers via ai-lib-rust (requires AI_PROTOCOL_DIR)
+ai-protocol = ["dep:ai-lib-rust"]
 
 [profile.release]
 opt-level = "z"      # Optimize for size

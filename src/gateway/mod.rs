@@ -290,6 +290,8 @@ pub struct AppState {
     pub nextcloud_talk_webhook_secret: Option<Arc<str>>,
     /// Observability backend for metrics scraping
     pub observer: Arc<dyn crate::observability::Observer>,
+    /// Optional cost tracker for dashboard
+    pub cost_tracker: Option<Arc<crate::cost::CostTracker>>,
 }
 
 /// Run the HTTP gateway using axum with proper HTTP/1.1 compliance.
@@ -529,6 +531,7 @@ pub async fn run_gateway(host: &str, port: u16, config: Config) -> Result<()> {
     }
     println!("  GET  /health    — health check");
     println!("  GET  /metrics   — Prometheus metrics");
+    println!("  GET  /dashboard — monitoring dashboard (cost, events, status)");
     if let Some(code) = pairing.pairing_code() {
         println!();
         println!("  🔐 PAIRING REQUIRED — use this one-time code:");
@@ -549,6 +552,11 @@ pub async fn run_gateway(host: &str, port: u16, config: Config) -> Result<()> {
     let observer: Arc<dyn crate::observability::Observer> =
         Arc::from(crate::observability::create_observer(&config.observability));
 
+    // Cost tracker for dashboard (optional)
+    let cost_tracker = crate::cost::CostTracker::new(config.cost.clone(), &config.workspace_dir)
+        .ok()
+        .map(Arc::new);
+
     let state = AppState {
         config: config_state,
         provider,
@@ -568,12 +576,15 @@ pub async fn run_gateway(host: &str, port: u16, config: Config) -> Result<()> {
         nextcloud_talk: nextcloud_talk_channel,
         nextcloud_talk_webhook_secret,
         observer,
+        cost_tracker,
     };
 
     // Build router with middleware
     let app = Router::new()
         .route("/health", get(handle_health))
         .route("/metrics", get(handle_metrics))
+        .route("/dashboard", get(handle_dashboard))
+        .route("/api/dashboard", get(handle_dashboard_api))
         .route("/pair", post(handle_pair))
         .route("/webhook", post(handle_webhook))
         .route("/whatsapp", get(handle_whatsapp_verify))
@@ -631,6 +642,92 @@ async fn handle_metrics(State(state): State<AppState>) -> impl IntoResponse {
         StatusCode::OK,
         [(header::CONTENT_TYPE, PROMETHEUS_CONTENT_TYPE)],
         body,
+    )
+}
+
+/// GET /api/dashboard — JSON with health, runtime, metrics summary, cost
+async fn handle_dashboard_api(State(state): State<AppState>) -> impl IntoResponse {
+    let health = serde_json::json!({
+        "status": "ok",
+        "paired": state.pairing.is_paired(),
+        "runtime": crate::health::snapshot_json(),
+    });
+
+    let cost_summary = state
+        .cost_tracker
+        .as_ref()
+        .and_then(|ct| ct.get_summary().ok())
+        .map(|s| serde_json::json!({
+            "session_cost_usd": s.session_cost_usd,
+            "daily_cost_usd": s.daily_cost_usd,
+            "monthly_cost_usd": s.monthly_cost_usd,
+            "total_tokens": s.total_tokens,
+            "request_count": s.request_count,
+            "by_model": s.by_model,
+        }));
+
+    let body = serde_json::json!({
+        "health": health,
+        "cost": cost_summary,
+    });
+    Json(body)
+}
+
+/// GET /dashboard — HTML dashboard for monitoring
+async fn handle_dashboard() -> impl IntoResponse {
+    const HTML: &str = r##"<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ZeroSpider Dashboard</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 1.5rem; background: #0f172a; color: #e2e8f0; }
+    h1 { color: #38bdf8; margin-bottom: 1rem; }
+    .card { background: #1e293b; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+    .card h2 { margin: 0 0 0.5rem; font-size: 0.9rem; color: #94a3b8; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+    .stat { font-size: 1.5rem; font-weight: 600; color: #38bdf8; }
+    .ok { color: #4ade80; }
+    pre { overflow-x: auto; font-size: 0.8rem; }
+    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <h1>ZeroSpider Dashboard</h1>
+  <div id="content">Loading...</div>
+  <script>
+    async function load() {
+      try {
+        const r = await fetch('/api/dashboard');
+        const d = await r.json();
+        const cost = d.cost || {};
+        let html = '<div class="card"><h2>Status</h2><span class="stat ok">' + d.health.status + '</span></div>';
+        if (cost.daily_cost_usd !== undefined) {
+          html += '<div class="grid">';
+          html += '<div class="card"><h2>Session Cost</h2><span class="stat">$' + cost.session_cost_usd.toFixed(4) + '</span></div>';
+          html += '<div class="card"><h2>Daily Cost</h2><span class="stat">$' + cost.daily_cost_usd.toFixed(4) + '</span></div>';
+          html += '<div class="card"><h2>Monthly Cost</h2><span class="stat">$' + cost.monthly_cost_usd.toFixed(4) + '</span></div>';
+          html += '<div class="card"><h2>Total Tokens</h2><span class="stat">' + (cost.total_tokens || 0).toLocaleString() + '</span></div>';
+          html += '<div class="card"><h2>Requests</h2><span class="stat">' + (cost.request_count || 0) + '</span></div>';
+          html += '</div>';
+        }
+        html += '<div class="card"><h2>Runtime</h2><pre>' + JSON.stringify(d.health.runtime, null, 2) + '</pre></div>';
+        document.getElementById('content').innerHTML = html;
+      } catch (e) {
+        document.getElementById('content').innerHTML = '<div class="card"><p>Error: ' + e.message + '</p></div>';
+      }
+    }
+    load();
+    setInterval(load, 30000);
+  </script>
+</body>
+</html>"##;
+    (
+        StatusCode::OK,
+        [(header::CONTENT_TYPE, "text/html; charset=utf-8")],
+        HTML,
     )
 }
 
@@ -1413,6 +1510,7 @@ mod tests {
             nextcloud_talk: None,
             nextcloud_talk_webhook_secret: None,
             observer: Arc::new(crate::observability::NoopObserver),
+            cost_tracker: None,
         };
 
         let response = handle_metrics(State(state)).await.into_response();
@@ -1458,6 +1556,7 @@ mod tests {
             nextcloud_talk: None,
             nextcloud_talk_webhook_secret: None,
             observer,
+            cost_tracker: None,
         };
 
         let response = handle_metrics(State(state)).await.into_response();
@@ -1820,6 +1919,7 @@ mod tests {
             nextcloud_talk: None,
             nextcloud_talk_webhook_secret: None,
             observer: Arc::new(crate::observability::NoopObserver),
+            cost_tracker: None,
         };
 
         let mut headers = HeaderMap::new();
@@ -1880,6 +1980,7 @@ mod tests {
             nextcloud_talk: None,
             nextcloud_talk_webhook_secret: None,
             observer: Arc::new(crate::observability::NoopObserver),
+            cost_tracker: None,
         };
 
         let headers = HeaderMap::new();
@@ -1952,6 +2053,7 @@ mod tests {
             nextcloud_talk: None,
             nextcloud_talk_webhook_secret: None,
             observer: Arc::new(crate::observability::NoopObserver),
+            cost_tracker: None,
         };
 
         let response = handle_webhook(
@@ -1996,6 +2098,7 @@ mod tests {
             nextcloud_talk: None,
             nextcloud_talk_webhook_secret: None,
             observer: Arc::new(crate::observability::NoopObserver),
+            cost_tracker: None,
         };
 
         let mut headers = HeaderMap::new();
@@ -2045,6 +2148,7 @@ mod tests {
             nextcloud_talk: None,
             nextcloud_talk_webhook_secret: None,
             observer: Arc::new(crate::observability::NoopObserver),
+            cost_tracker: None,
         };
 
         let mut headers = HeaderMap::new();
@@ -2099,6 +2203,7 @@ mod tests {
             nextcloud_talk: None,
             nextcloud_talk_webhook_secret: None,
             observer: Arc::new(crate::observability::NoopObserver),
+            cost_tracker: None,
         };
 
         let response = handle_nextcloud_talk_webhook(
@@ -2149,6 +2254,7 @@ mod tests {
             nextcloud_talk: Some(channel),
             nextcloud_talk_webhook_secret: Some(Arc::from(secret)),
             observer: Arc::new(crate::observability::NoopObserver),
+            cost_tracker: None,
         };
 
         let mut headers = HeaderMap::new();

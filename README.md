@@ -81,6 +81,7 @@ cargo run --features ai-protocol,smart-routing,multi-model,remote-deploy
 
 ```bash
 # AI Protocol directory (for protocol-driven providers)
+# Clone from: git clone https://github.com/hiddenpath/ai-protocol
 export AI_PROTOCOL_DIR=/path/to/ai-protocol
 
 # Provider API keys
@@ -139,12 +140,22 @@ deployment:
 
 | Flag | Description |
 |------|-------------|
-| `ai-protocol` | Enable ai-lib-rust integration |
+| `ai-protocol` | Enable ai-lib-rust integration (protocol-driven providers via `protocol:provider/model`) |
 | `smart-routing` | Enable provider scoring and adaptive model selection |
 | `multi-model` | Enable multi-model negotiation and parallel tasks |
 | `remote-deploy` | Enable controlled remote deployment |
 | `hardware` | Enable hardware peripherals support |
 | `channel-matrix` | Enable Matrix channel with E2EE |
+
+## Dashboard
+
+When running the gateway (`zerospider gateway`), a monitoring dashboard is available at `GET /dashboard`:
+
+- **Status**: Health and pairing state
+- **Cost**: Session, daily, monthly costs and token usage (when `[cost] enabled = true`)
+- **Runtime**: Component health snapshot
+
+The dashboard auto-refreshes every 30 seconds.
 
 ---
 
@@ -164,8 +175,8 @@ ZeroSpider uses a trait-driven, modular architecture:
 
 ZeroSpider integrates with:
 
-- [ai-lib-rust](https://github.com/hiddenpath/ai-lib-rust) - Protocol-driven AI API client library
-- [ai-protocol](https://github.com/hiddenpath/ai-protocol) - Provider configuration and protocol definitions
+- [ai-lib-rust](https://crates.io/crates/ai-lib-rust) - Protocol-driven AI API client (crates.io, enable with `--features ai-protocol`)
+- [ai-protocol](https://github.com/hiddenpath/ai-protocol) - Provider YAML configs (clone and set `AI_PROTOCOL_DIR`)
 
 ### Sync with Upstream
 

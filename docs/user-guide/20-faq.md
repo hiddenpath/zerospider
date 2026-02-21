@@ -1,6 +1,6 @@
 # 第二十章：常见问题
 
-本章汇总 ZeroClaw 使用过程中的常见问题及解决方案。
+本章汇总 ZeroSpider 使用过程中的常见问题及解决方案。
 
 ---
 
@@ -54,11 +54,11 @@ rustup update stable
 rustup default stable
 ```
 
-### Q: 找不到 zeroclaw 命令
+### Q: 找不到 zerospider 命令
 
 **错误信息**：
 ```
-zeroclaw: command not found
+zerospider: command not found
 ```
 
 **解决方案**：
@@ -87,7 +87,7 @@ Error: Unauthorized - Invalid API key
 
 1. 确认密钥正确
    ```bash
-   zeroclaw auth status
+   zerospider auth status
    ```
 
 2. 检查环境变量
@@ -97,7 +97,7 @@ Error: Unauthorized - Invalid API key
 
 3. 重新配置
    ```bash
-   zeroclaw auth paste-token --provider openai
+   zerospider auth paste-token --provider openai
    ```
 
 ### Q: 配置文件找不到
@@ -111,10 +111,10 @@ Error: Config file not found
 
 ```bash
 # 重新初始化
-zeroclaw onboard
+zerospider onboard
 
 # 或手动创建目录
-mkdir -p ~/.zeroclaw
+mkdir -p ~/.zerospider
 ```
 
 ### Q: 配置格式错误
@@ -128,10 +128,10 @@ Error: Failed to parse config
 
 ```bash
 # 检查 YAML 语法
-zeroclaw config validate
+zerospider config validate
 
 # 查看配置示例
-zeroclaw config schema
+zerospider config schema
 ```
 
 ---
@@ -149,16 +149,16 @@ zeroclaw config schema
 
 ```bash
 # 1. 检查服务状态
-zeroclaw status
+zerospider status
 
 # 2. 检查渠道
-zeroclaw channel list
+zerospider channel list
 
 # 3. 检查认证
-zeroclaw auth status
+zerospider auth status
 
 # 4. 查看日志
-tail -f ~/.zeroclaw/logs/zeroclaw.log
+tail -f ~/.zerospider/logs/zerospider.log
 ```
 
 ### Q: AI 回答不正确
@@ -192,13 +192,13 @@ tail -f ~/.zeroclaw/logs/zeroclaw.log
 
 ```bash
 # 检查记忆配置
-zeroclaw status | grep -A5 "记忆系统"
+zerospider status | grep -A5 "记忆系统"
 
 # 查看记忆存储
-ls ~/.zeroclaw/memory/
+ls ~/.zerospider/memory/
 
 # 检查数据库
-sqlite3 ~/.zeroclaw/memory/memory.db "SELECT COUNT(*) FROM memories;"
+sqlite3 ~/.zerospider/memory/memory.db "SELECT COUNT(*) FROM memories;"
 ```
 
 ---
@@ -211,7 +211,7 @@ sqlite3 ~/.zeroclaw/memory/memory.db "SELECT COUNT(*) FROM memories;"
 
 1. Bot Token 是否正确
    ```bash
-   zeroclaw channel doctor
+   zerospider channel doctor
    ```
 
 2. 用户是否在白名单
@@ -224,7 +224,7 @@ sqlite3 ~/.zeroclaw/memory/memory.db "SELECT COUNT(*) FROM memories;"
 
 3. 服务是否运行
    ```bash
-   zeroclaw status
+   zerospider status
    ```
 
 ### Q: Discord Bot 上线但不回复
@@ -286,7 +286,7 @@ model: llama-3.1-70b-versatile
 **检查内存使用**：
 
 ```bash
-zeroclaw status --memory
+zerospider status --memory
 ```
 
 **优化方案**：
@@ -306,7 +306,7 @@ agent:
 **查看使用统计**：
 
 ```bash
-zeroclaw stats
+zerospider stats
 ```
 
 **优化方案**：
@@ -328,7 +328,7 @@ routing:
 
 | 错误代码 | 说明 | 解决方案 |
 |----------|------|----------|
-| `E001` | 配置文件不存在 | 运行 `zeroclaw onboard` |
+| `E001` | 配置文件不存在 | 运行 `zerospider onboard` |
 | `E002` | API 密钥无效 | 检查并重新配置密钥 |
 | `E003` | 网络连接失败 | 检查网络或代理设置 |
 | `E004` | 模型不可用 | 检查模型名称是否正确 |
@@ -347,30 +347,30 @@ routing:
 
 ```bash
 # 实时日志
-tail -f ~/.zeroclaw/logs/zeroclaw.log
+tail -f ~/.zerospider/logs/zerospider.log
 
 # 错误日志
-cat ~/.zeroclaw/logs/error.log
+cat ~/.zerospider/logs/error.log
 ```
 
 ### 运行诊断
 
 ```bash
 # 全面诊断
-zeroclaw doctor
+zerospider doctor
 
 # 检查模型
-zeroclaw doctor models
+zerospider doctor models
 
 # 检查渠道
-zeroclaw channel doctor
+zerospider channel doctor
 ```
 
 ### 社区支持
 
-- **GitHub Issues**: https://github.com/zeroclaw-labs/zeroclaw/issues
-- **文档**: https://zeroclaw.ai/docs
-- **社区论坛**: https://community.zeroclaw.ai
+- **GitHub Issues**: https://github.com/hiddenpath/zerospider/issues
+- **文档**: https://github.com/hiddenpath/zerospider#readme
+- **社区论坛**: https://github.com/hiddenpath/zerospider/discussions
 
 ---
 

@@ -81,6 +81,7 @@ cargo run --features ai-protocol,smart-routing,multi-model,remote-deploy
 
 ```bash
 # AI Protocol 目录（用于协议驱动的 Provider）
+# 克隆自：git clone https://github.com/hiddenpath/ai-protocol
 export AI_PROTOCOL_DIR=/path/to/ai-protocol
 
 # Provider API 密钥
@@ -139,12 +140,22 @@ deployment:
 
 | 标志 | 描述 |
 |------|------|
-| `ai-protocol` | 启用 ai-lib-rust 集成 |
+| `ai-protocol` | 启用 ai-lib-rust 集成（通过 `protocol:provider/model` 使用协议驱动 Provider） |
 | `smart-routing` | 启用 Provider 评分和自适应模型选择 |
 | `multi-model` | 启用多模型协商和并行任务 |
 | `remote-deploy` | 启用受控远程部署 |
 | `hardware` | 启用硬件外设支持 |
 | `channel-matrix` | 启用带 E2EE 的 Matrix 通道 |
+
+## 仪表盘
+
+运行网关（`zerospider gateway`）时，可通过 `GET /dashboard` 访问监控仪表盘：
+
+- **状态**：健康与配对状态
+- **成本**：会话、日、月成本及 Token 用量（需在配置中启用 `[cost] enabled = true`）
+- **运行时**：组件健康快照
+
+仪表盘每 30 秒自动刷新。
 
 ---
 
@@ -164,8 +175,8 @@ ZeroSpider 使用 trait 驱动的模块化架构：
 
 ZeroSpider 集成了：
 
-- [ai-lib-rust](https://github.com/hiddenpath/ai-lib-rust) - 协议驱动的 AI API 客户端库
-- [ai-protocol](https://github.com/hiddenpath/ai-protocol) - Provider 配置和协议定义
+- [ai-lib-rust](https://crates.io/crates/ai-lib-rust) - 协议驱动的 AI API 客户端（crates.io，使用 `--features ai-protocol` 启用）
+- [ai-protocol](https://github.com/hiddenpath/ai-protocol) - Provider YAML 配置（克隆后设置 `AI_PROTOCOL_DIR`）
 
 ### 同步上游更新
 

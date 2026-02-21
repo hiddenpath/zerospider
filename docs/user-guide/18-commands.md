@@ -1,6 +1,6 @@
 # 第十八章：命令参考
 
-本章提供 ZeroClaw 所有命令的快速参考。
+本章提供 ZeroSpider 所有命令的快速参考。
 
 ---
 
@@ -9,20 +9,20 @@
 ### 查看帮助
 
 ```bash
-zeroclaw --help
-zeroclaw [command] --help
+zerospider --help
+zerospider [command] --help
 ```
 
 ### 查看版本
 
 ```bash
-zeroclaw --version
+zerospider --version
 ```
 
 ### 查看状态
 
 ```bash
-zeroclaw status
+zerospider status
 ```
 
 ---
@@ -33,13 +33,13 @@ zeroclaw status
 
 ```bash
 # 快速配置
-zeroclaw onboard
+zerospider onboard
 
 # 交互式配置
-zeroclaw onboard --interactive
+zerospider onboard --interactive
 
 # 指定参数
-zeroclaw onboard --api-key sk-xxx --provider openrouter --model auto
+zerospider onboard --api-key sk-xxx --provider openrouter --model auto
 ```
 
 ---
@@ -50,22 +50,22 @@ zeroclaw onboard --api-key sk-xxx --provider openrouter --model auto
 
 ```bash
 # 交互模式
-zeroclaw agent
+zerospider agent
 
 # 单次对话
-zeroclaw agent --message "你好"
+zerospider agent --message "你好"
 
 # 指定模型
-zeroclaw agent --provider openai --model gpt-4o
+zerospider agent --provider openai --model gpt-4o
 
 # 设置温度
-zeroclaw agent --temperature 0.7
+zerospider agent --temperature 0.7
 
 # 启用智能选择
-zeroclaw agent --smart
+zerospider agent --smart
 
 # 启用多模型协商
-zeroclaw agent --negotiate voting
+zerospider agent --negotiate voting
 ```
 
 ---
@@ -75,20 +75,20 @@ zeroclaw agent --negotiate voting
 ### providers - 列出支持的 Provider
 
 ```bash
-zeroclaw providers
+zerospider providers
 ```
 
 ### models - 管理模型
 
 ```bash
 # 刷新模型列表
-zeroclaw models refresh
+zerospider models refresh
 
 # 刷新特定 Provider
-zeroclaw models refresh --provider openai
+zerospider models refresh --provider openai
 
 # 强制刷新
-zeroclaw models refresh --force
+zerospider models refresh --force
 ```
 
 ---
@@ -99,22 +99,22 @@ zeroclaw models refresh --force
 
 ```bash
 # 查看认证状态
-zeroclaw auth status
+zerospider auth status
 
 # 列出认证配置
-zeroclaw auth list
+zerospider auth list
 
 # 粘贴 Token
-zeroclaw auth paste-token --provider anthropic
+zerospider auth paste-token --provider anthropic
 
 # OAuth 登录
-zeroclaw auth login --provider openai-codex --device-code
+zerospider auth login --provider openai-codex --device-code
 
 # 切换配置
-zeroclaw auth use --provider openai --profile work
+zerospider auth use --provider openai --profile work
 
 # 删除认证
-zeroclaw auth logout --provider openai
+zerospider auth logout --provider openai
 ```
 
 ---
@@ -125,22 +125,22 @@ zeroclaw auth logout --provider openai
 
 ```bash
 # 列出渠道
-zeroclaw channel list
+zerospider channel list
 
 # 启动渠道
-zeroclaw channel start
+zerospider channel start
 
 # 健康检查
-zeroclaw channel doctor
+zerospider channel doctor
 
 # 添加渠道
-zeroclaw channel add telegram '{"token": "YOUR_TOKEN"}'
+zerospider channel add telegram '{"token": "YOUR_TOKEN"}'
 
 # 删除渠道
-zeroclaw channel remove telegram
+zerospider channel remove telegram
 
 # 绑定 Telegram 用户
-zeroclaw channel bind-telegram username_or_id
+zerospider channel bind-telegram username_or_id
 ```
 
 ---
@@ -151,35 +151,35 @@ zeroclaw channel bind-telegram username_or_id
 
 ```bash
 # 列出任务
-zeroclaw cron list
+zerospider cron list
 
 # 添加任务（cron 表达式）
-zeroclaw cron add "0 9 * * *" "提醒内容"
+zerospider cron add "0 9 * * *" "提醒内容"
 
 # 添加任务（指定时间）
-zeroclaw cron add-at "2024-12-31T23:59:00" "新年快乐"
+zerospider cron add-at "2024-12-31T23:59:00" "新年快乐"
 
 # 添加任务（固定间隔）
-zeroclaw cron add-every 3600000 "每小时提醒"  # 毫秒
+zerospider cron add-every 3600000 "每小时提醒"  # 毫秒
 
 # 添加任务（延迟执行）
-zeroclaw cron once "30m" "30分钟后提醒"
+zerospider cron once "30m" "30分钟后提醒"
 
 # 删除任务
-zeroclaw cron remove task_id
+zerospider cron remove task_id
 
 # 更新任务
-zeroclaw cron update task_id --expression "0 10 * * *"
+zerospider cron update task_id --expression "0 10 * * *"
 
 # 暂停/恢复
-zeroclaw cron pause task_id
-zeroclaw cron resume task_id
+zerospider cron pause task_id
+zerospider cron resume task_id
 
 # 立即执行
-zeroclaw cron run task_id
+zerospider cron run task_id
 
 # 查看执行历史
-zeroclaw cron runs
+zerospider cron runs
 ```
 
 ---
@@ -190,38 +190,38 @@ zeroclaw cron runs
 
 ```bash
 # 启动守护进程
-zeroclaw daemon
+zerospider daemon
 
 # 指定端口
-zeroclaw daemon --port 8080
+zerospider daemon --port 8080
 
 # 指定主机
-zeroclaw daemon --host 0.0.0.0
+zerospider daemon --host 0.0.0.0
 ```
 
 ### gateway - 启动网关
 
 ```bash
-zeroclaw gateway --port 8080
+zerospider gateway --port 8080
 ```
 
 ### service - 系统服务管理
 
 ```bash
 # 安装服务
-zeroclaw service install
+zerospider service install
 
 # 启动服务
-zeroclaw service start
+zerospider service start
 
 # 停止服务
-zeroclaw service stop
+zerospider service stop
 
 # 查看状态
-zeroclaw service status
+zerospider service status
 
 # 卸载服务
-zeroclaw service uninstall
+zerospider service uninstall
 ```
 
 ---
@@ -232,13 +232,13 @@ zeroclaw service uninstall
 
 ```bash
 # 全面诊断
-zeroclaw doctor
+zerospider doctor
 
 # 检查模型
-zeroclaw doctor models
+zerospider doctor models
 
 # 检查特定 Provider
-zeroclaw doctor models --provider openai
+zerospider doctor models --provider openai
 ```
 
 ---
@@ -249,13 +249,13 @@ zeroclaw doctor models --provider openai
 
 ```bash
 # 列出技能
-zeroclaw skills list
+zerospider skills list
 
 # 安装技能
-zeroclaw skills install https://github.com/user/skill
+zerospider skills install https://github.com/user/skill
 
 # 删除技能
-zeroclaw skills remove skill_name
+zerospider skills remove skill_name
 ```
 
 ---
@@ -266,7 +266,7 @@ zeroclaw skills remove skill_name
 
 ```bash
 # 查看配置 Schema
-zeroclaw config schema
+zerospider config schema
 ```
 
 ---
@@ -277,7 +277,7 @@ zeroclaw config schema
 
 ```bash
 # 查看集成详情
-zeroclaw integrations info composio
+zerospider integrations info composio
 ```
 
 ---
@@ -288,26 +288,26 @@ zeroclaw integrations info composio
 
 ```bash
 # 发现 USB 设备
-zeroclaw hardware discover
+zerospider hardware discover
 
 # 检查设备
-zeroclaw hardware introspect --path /dev/ttyACM0
+zerospider hardware introspect --path /dev/ttyACM0
 
 # 获取芯片信息
-zeroclaw hardware info --chip STM32F401RETx
+zerospider hardware info --chip STM32F401RETx
 ```
 
 ### peripheral - 外设管理
 
 ```bash
 # 列出外设
-zeroclaw peripheral list
+zerospider peripheral list
 
 # 添加外设
-zeroclaw peripheral add nucleo-f401re /dev/ttyACM0
+zerospider peripheral add nucleo-f401re /dev/ttyACM0
 
 # 刷写固件
-zeroclaw peripheral flash --port /dev/ttyACM0
+zerospider peripheral flash --port /dev/ttyACM0
 ```
 
 ---
@@ -318,13 +318,13 @@ zeroclaw peripheral flash --port /dev/ttyACM0
 
 ```bash
 # 从 OpenClaw 迁移
-zeroclaw migrate openclaw
+zerospider migrate openclaw
 
 # 指定源目录
-zeroclaw migrate openclaw --source /path/to/openclaw
+zerospider migrate openclaw --source /path/to/openclaw
 
 # 预览（不写入）
-zeroclaw migrate openclaw --dry-run
+zerospider migrate openclaw --dry-run
 ```
 
 ---
@@ -335,25 +335,25 @@ zeroclaw migrate openclaw --dry-run
 
 ```bash
 # 部署到服务器
-zeroclaw deploy server_name
+zerospider deploy server_name
 
 # 查看状态
-zeroclaw deploy status server_name
+zerospider deploy status server_name
 
 # 健康检查
-zeroclaw deploy health-check server_name
+zerospider deploy health-check server_name
 
 # 更新
-zeroclaw deploy update server_name
+zerospider deploy update server_name
 
 # 回滚
-zeroclaw deploy rollback server_name
+zerospider deploy rollback server_name
 
 # 查看日志
-zeroclaw deploy logs server_name --follow
+zerospider deploy logs server_name --follow
 
 # 重启
-zeroclaw deploy restart server_name
+zerospider deploy restart server_name
 ```
 
 ---

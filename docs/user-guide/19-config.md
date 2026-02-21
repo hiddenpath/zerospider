@@ -1,13 +1,13 @@
 # 第十九章：配置参考
 
-本章提供 ZeroClaw 完整配置文件的参考。
+本章提供 ZeroSpider 完整配置文件的参考。
 
 ---
 
 ## 配置文件位置
 
 ```
-~/.zeroclaw/config.yaml
+~/.zerospider/config.yaml
 ```
 
 ---
@@ -16,7 +16,7 @@
 
 ```yaml
 # ===========================================
-# ZeroClaw 配置文件
+# ZeroSpider 配置文件
 # ===========================================
 
 # -------------------------------------------
@@ -245,7 +245,7 @@ logging:
   level: info
   
   # 文件路径
-  file: ~/.zeroclaw/logs/zeroclaw.log
+  file: ~/.zerospider/logs/zeroclaw.log
   
   # 最大文件大小（MB）
   max_size: 10
