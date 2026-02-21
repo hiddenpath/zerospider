@@ -47,6 +47,19 @@ cargo build --features ai-protocol,smart-routing,multi-model,remote-deploy
 cargo build
 ```
 
+### 树莓派交叉编译 (aarch64)
+
+```bash
+# 安装目标平台
+rustup target add aarch64-unknown-linux-gnu
+
+# 构建发布版本
+cargo build --release --target aarch64-unknown-linux-gnu
+
+# 二进制文件位置
+ls target/aarch64-unknown-linux-gnu/release/zerospider
+```
+
 ### 运行
 
 ```bash
@@ -153,6 +166,24 @@ ZeroSpider 集成了：
 
 - [ai-lib-rust](https://github.com/hiddenpath/ai-lib-rust) - 协议驱动的 AI API 客户端库
 - [ai-protocol](https://github.com/hiddenpath/ai-protocol) - Provider 配置和协议定义
+
+### 同步上游更新
+
+ZeroSpider 追踪 [zeroclaw-labs/zeroclaw](https://github.com/zeroclaw-labs/zeroclaw) 的更新：
+
+```bash
+# 列出上游变更
+./sync-upstream.sh --list
+
+# 预览合并
+./sync-upstream.sh --dry-run
+
+# 执行合并
+./sync-upstream.sh
+
+# 选择性合并特定提交
+./sync-upstream.sh --cherry-pick <commit-hash>
+```
 
 ---
 

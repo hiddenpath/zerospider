@@ -47,6 +47,19 @@ cargo build --features ai-protocol,smart-routing,multi-model,remote-deploy
 cargo build
 ```
 
+### Cross-Compile for Raspberry Pi (aarch64)
+
+```bash
+# Install target
+rustup target add aarch64-unknown-linux-gnu
+
+# Build release binary
+cargo build --release --target aarch64-unknown-linux-gnu
+
+# Binary location
+ls target/aarch64-unknown-linux-gnu/release/zerospider
+```
+
 ### Run
 
 ```bash
@@ -153,6 +166,24 @@ ZeroSpider integrates with:
 
 - [ai-lib-rust](https://github.com/hiddenpath/ai-lib-rust) - Protocol-driven AI API client library
 - [ai-protocol](https://github.com/hiddenpath/ai-protocol) - Provider configuration and protocol definitions
+
+### Sync with Upstream
+
+ZeroSpider tracks [zeroclaw-labs/zeroclaw](https://github.com/zeroclaw-labs/zeroclaw) for updates:
+
+```bash
+# List upstream changes
+./sync-upstream.sh --list
+
+# Preview merge
+./sync-upstream.sh --dry-run
+
+# Merge upstream
+./sync-upstream.sh
+
+# Cherry-pick specific commit
+./sync-upstream.sh --cherry-pick <commit-hash>
+```
 
 ---
 

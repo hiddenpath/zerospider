@@ -1,9 +1,43 @@
 # Changelog
 
-All notable changes to ZeroClaw will be documented in this file.
+All notable changes to ZeroSpider will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.1.1] - 2026-02-21
+
+### Added
+- **Project Fork**: ZeroSpider forked from [ZeroClaw](https://github.com/zeroclaw-labs/zeroclaw) with enhanced features
+- **Raspberry Pi Support**: Cross-compilation for aarch64-unknown-linux-gnu target (64-bit ARM)
+- **Upstream Sync Script**: `sync-upstream.sh` for tracking zeroclaw-labs/zeroclaw main branch
+  - `--dry-run` mode for preview
+  - `--list` mode to show upstream changes
+  - `--cherry-pick <commit>` for selective merging
+- **New Tools from Upstream**:
+  - `pdf_read` - Extract text from PDF files
+  - `glob_search` - Secure file pattern search with glob support
+
+### Fixed
+- **Provider Fixes**: Ollama and ReliableProvider tool calling restored
+- **Telegram**: Message overflow prevention from continuation markers
+- **Gemini OAuth**: Series of fixes for OAuth envelope and payload handling
+- **Cron**: JobType persistence and conversion fixes
+- **Onboard**: Explicit overwrite confirmation for existing config
+- **Build**: Release-fast profile compilation errors resolved
+
+### Changed
+- **Project Name**: Renamed from ZeroClaw to ZeroSpider
+- **License**: Dual MIT OR Apache-2.0 license
+- **Author**: Luqiang Wang
+- **Repository**: https://github.com/hiddenpath/zerospider
+
+### Security
+- **Cron Tools**: Security policy now passed to cron tools in registry
+
+### Documentation
+- Restored AGENTS.md and CLAUDE.md as functional documentation
+- Updated README with ZeroSpider branding
 
 ## [Unreleased]
 
