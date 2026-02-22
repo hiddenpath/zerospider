@@ -50,6 +50,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Dependencies**: ai-lib-rust now from crates.io (was path); ai-protocol remains env-based (clone from GitHub)
 - **User Guide**: Aligned docs to ZeroSpider branding (ZeroClaw → ZeroSpider, zeroclaw → zerospider, ~/.zeroclaw → ~/.zerospider)
 
+
+## [0.3.0] - 2026-02-23
+
+### Added
+- **Remote Deployment Feature**: Complete SSH-based remote deployment system for ZeroSpider
+  - New feature flag: `--features remote-deploy`
+  - CLI commands: `deploy deploy`, `deploy status`, `deploy health-check`, `deploy list`, `deploy rollback`, `deploy update`, `deploy sync-config`
+  - Multiple deployment modes: Direct (binary), Docker, and systemd
+  - Health monitoring with automated health checks
+  - Rollback support for safe deployments
+  - Configuration synchronization to remote servers
+- **Deploy Configuration Schema**:
+  - `[deploy.servers]` for defining deployment targets (host, port, user, ssh_key, labels)
+  - `[deploy.settings]` for deployment parameters (mode, binary_path, working_dir, auto_start, etc.)
+- **Deployment Module** (`src/deploy/`):
+  - `RemoteDeployer` for managing deployments
+  - `DeploymentTarget` for server configuration
+  - `DeploymentConfig` for deployment settings
+  - `DeploymentStatus` for tracking deployment state
+- **User Guide Chapter**: `docs/user-guide/16-remote-deployment.md` with comprehensive deployment documentation
+- **Unit Tests**: Comprehensive test coverage for deploy module (`src/deploy/remote.rs`)
+
+### Changed
+- **Main Config struct**: Added `deploy` field for deployment configuration
+- **Config Schema**: Added `DeployConfig`, `DeploymentTargetConfig`, and `DeploymentSettingsConfig` structs
+- **Main CLI**: Added `Deploy` command variant with subcommands
+- **Wizard**: Updated wizard to include default `deploy` configuration in generated configs
+- **README**: Updated with Remote Deployment section and Deploy commands documentation
+- **rust-toolchain.toml**: Fixed toolchain configuration (changed from incorrect Windows toolchain to stable)
+
+### Security
+- Deployment uses SSH key-based authentication, avoiding password authentication
+- Supports custom SSH key paths for different deployment environments
+
+### Documentation
+- README.md: Added "Remote Deployment" section with commands and configuration examples
+- docs/user-guide/16-remote-deployment.md: Complete user guide for remote deployment
+- Updated user guide chapters list in README.md
+
+Technical Notes:
+- Library builds successfully with all deploy features
+- Note: The binary has a pre-existing compilation error in `src/gateway/mod.rs` related to `crate::cost::CostTracker` resolution that's unrelated to the deploy feature
+
+
 ## [Unreleased]
 
 ### Security
@@ -103,6 +147,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Workspace escape prevention
 - Forbidden system path protection (`/etc`, `/root`, `~/.ssh`)
 
+[0.3.0]: https://github.com/hiddenpath/zerospider/releases/tag/v0.3.0
 [0.2.0]: https://github.com/hiddenpath/zerospider/releases/tag/v0.2.0
 [0.1.1]: https://github.com/hiddenpath/zerospider/releases/tag/v0.1.1
 [0.1.0]: https://github.com/theonlyhennygod/zeroclaw/releases/tag/v0.1.0

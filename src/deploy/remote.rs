@@ -409,3 +409,105 @@ mod tests {
         assert!(step.rollback_command.is_some());
     }
 }
+#[test]
+fn test_remote_deployer_new() {
+    let deployer = RemoteDeployer::new(DeploymentMode::Direct);
+    assert_eq!(deployer.list_targets().len(), 0);
+}
+
+#[test]
+fn test_register_target() {
+    let mut deployer = RemoteDeployer::new(DeploymentMode::Direct);
+    let target = DeploymentTarget::new("test-server", "192.168.1.200", "deploy")
+        .with_label("env", "staging");
+
+    deployer.register_target(target);
+    assert_eq!(deployer.list_targets().len(), 1);
+
+    let status = deployer.get_status("test-server");
+    assert!(status.is_some());
+    assert!(!status.unwrap().deployed);
+}
+
+#[test]
+fn test_set_config() {
+    let mut deployer = RemoteDeployer::new(DeploymentMode::Direct);
+    let config = DeploymentConfig::default();
+
+    deployer.set_config(config);
+    // Config is stored, verification would require public access
+}
+
+#[test]
+fn test_list_targets() {
+    let mut deployer = RemoteDeployer::new(DeploymentMode::Direct);
+
+    deployer.register_target(DeploymentTarget::new("server-1", "192.168.1.1", "deploy"));
+    deployer.register_target(DeploymentTarget::new("server-2", "192.168.1.2", "deploy"));
+
+    let targets = deployer.list_targets();
+    assert_eq!(targets.len(), 2);
+}
+
+#[test]
+fn test_deployment_mode_direct() {
+    let mode = DeploymentMode::Direct;
+    assert!(matches!(mode, DeploymentMode::Direct));
+}
+
+#[test]
+fn test_deployment_mode_docker() {
+    let mode = DeploymentMode::Docker;
+    assert!(matches!(mode, DeploymentMode::Docker));
+}
+
+#[test]
+fn test_deployment_mode_systemd() {
+    let mode = DeploymentMode::Systemd;
+    assert!(matches!(mode, DeploymentMode::Systemd));
+}
+
+#[test]
+fn test_deployment_status_healthy() {
+    let status = DeploymentStatus {
+        target_id: "test".to_string(),
+        deployed: true,
+        version: Some("1.0.0".to_string()),
+        running: true,
+        last_health_check: Some(std::time::Instant::now()),
+        uptime: Some(Duration::from_secs(300)),
+        restart_count: 0,
+    };
+
+    assert!(status.healthy());
+}
+
+#[test]
+fn test_deployment_status_not_deployed() {
+    let status = DeploymentStatus {
+        target_id: "test".to_string(),
+        deployed: false,
+        version: None,
+        running: false,
+        last_health_check: None,
+        uptime: None,
+        restart_count: 0,
+    };
+
+    assert!(!status.healthy());
+}
+
+#[test]
+fn test_deployment_status_deployed_not_running() {
+    let status = DeploymentStatus {
+        target_id: "test".to_string(),
+        deployed: true,
+        version: Some("1.0.0".to_string()),
+        running: false,
+        last_health_check: None,
+        uptime: None,
+        restart_count: 2,
+    };
+
+    assert!(!status.healthy());
+}

@@ -129,10 +129,11 @@ deployment:
 9. [Negotiation](docs/user-guide/13-negotiation.md)
 10. [Automation](docs/user-guide/14-automation.md)
 11. [Deployment](docs/user-guide/15-deployment.md)
-12. [Security](docs/user-guide/17-security.md)
-13. [Commands](docs/user-guide/18-commands.md)
-14. [Configuration](docs/user-guide/19-config.md)
-15. [FAQ](docs/user-guide/20-faq.md)
+12. [Remote Deployment](docs/user-guide/16-remote-deployment.md)
+13. [Security](docs/user-guide/17-security.md)
+14. [Commands](docs/user-guide/18-commands.md)
+15. [Configuration](docs/user-guide/19-config.md)
+16. [FAQ](docs/user-guide/20-faq.md)
 
 ---
 
@@ -158,6 +159,60 @@ When running the gateway (`zerospider gateway`), a monitoring dashboard is avail
 The dashboard auto-refreshes every 30 seconds.
 
 ---
+
+## Remote Deployment
+
+ZeroSpider supports controlled remote deployment via SSH with the `--features remote-deploy` flag.
+
+### Deploy Commands
+
+```bash
+# Deploy to a remote server
+zerospider deploy deploy --server <server-id>
+
+# Check deployment status
+zerospider deploy status --server <server-id>
+
+# Run health check
+zerospider deploy health-check --server <server-id>
+
+# List configured deployment targets
+zerospider deploy list
+
+# Rollback to previous deployment
+zerospider deploy rollback --server <server-id>
+
+# Update to new version
+zerospider deploy update --server <server-id> --version <version>
+
+# Sync configuration
+zerospider deploy sync-config --server <server-id>
+```
+
+### Configuration
+
+Configure deployment targets in your `config.toml`:
+
+```toml
+[deploy]
+[[deploy.servers]]
+id = "prod-001"
+host = "192.168.1.100"
+port = 22
+user = "deploy"
+ssh_key = "~/.ssh/id_ed25519"
+labels = ["env:production", "region:us-west"]
+
+[deploy.settings]
+mode = "direct"  # Options: direct, docker, systemd
+binary_path = "/usr/local/bin/zerospider"
+working_dir = "/opt/zerospider"
+auto_start = true
+health_check_interval_secs = 30
+restart_on_failure = true
+max_restarts = 3
+```
+
 
 ## Architecture
 

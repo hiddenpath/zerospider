@@ -179,6 +179,10 @@ pub struct Config {
     #[serde(default)]
     pub peripherals: PeripheralsConfig,
 
+    /// Remote deployment configuration (`[deploy]`).
+    #[serde(default)]
+    pub deploy: DeployConfig,
+
     /// Delegate agent configurations for multi-agent workflows.
     #[serde(default)]
     pub agents: HashMap<String, DelegateAgentConfig>,
@@ -2221,6 +2225,117 @@ pub struct CustomTunnelConfig {
     pub url_pattern: Option<String>,
 }
 
+// ── Deploy ───────────────────────────────────────────────────────
+
+/// Remote deployment configuration for ZeroSpider to other servers.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct DeployConfig {
+    /// List of deployment targets (servers).
+    #[serde(default)]
+    pub servers: Vec<DeploymentTargetConfig>,
+
+    /// Deployment settings.
+    #[serde(default)]
+    pub settings: DeploymentSettingsConfig,
+}
+
+/// Deployment target server configuration.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct DeploymentTargetConfig {
+    /// Unique identifier for this server.
+    pub id: String,
+
+    /// Server hostname or IP address.
+    pub host: String,
+
+    /// SSH port (default: 22).
+    #[serde(default)]
+    pub port: u16,
+
+    /// SSH username.
+    pub user: String,
+
+    /// Path to SSH private key (optional, uses default SSH key if not specified).
+    #[serde(default)]
+    pub ssh_key: Option<String>,
+
+    /// Labels for grouping/querying targets (e.g., env:production).
+    #[serde(default)]
+    pub labels: Vec<String>,
+}
+
+/// Deployment settings configuration.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct DeploymentSettingsConfig {
+    /// Deployment mode: direct (binary), docker, or systemd.
+    #[serde(default)]
+    pub mode: String,
+
+    /// Binary path on remote server (default: /usr/local/bin/zerospider).
+    #[serde(default = "default_deploy_binary_path")]
+    pub binary_path: String,
+
+    /// Config file path on remote server.
+    #[serde(default)]
+    pub config_path: Option<String>,
+
+    /// Working directory on remote server.
+    #[serde(default = "default_deploy_working_dir")]
+    pub working_dir: String,
+
+    /// Auto-start service after deployment.
+    #[serde(default)]
+    pub auto_start: bool,
+
+    /// Health check interval in seconds.
+    #[serde(default = "default_health_check_interval")]
+    pub health_check_interval_secs: u64,
+
+    /// Restart on failure.
+    #[serde(default)]
+    pub restart_on_failure: bool,
+
+    /// Maximum restart attempts.
+    #[serde(default)]
+    pub max_restarts: u32,
+}
+
+fn default_deploy_binary_path() -> String {
+    "/usr/local/bin/zerospider".into()
+}
+
+fn default_deploy_working_dir() -> String {
+    "/opt/zerospider".into()
+}
+
+fn default_health_check_interval() -> u64 {
+    30
+}
+
+impl Default for DeployConfig {
+    fn default() -> Self {
+        Self {
+            servers: Vec::new(),
+            settings: DeploymentSettingsConfig::default(),
+        }
+    }
+}
+
+impl Default for DeploymentSettingsConfig {
+    fn default() -> Self {
+        Self {
+            mode: "direct".into(),
+            binary_path: default_deploy_binary_path(),
+            config_path: None,
+            working_dir: default_deploy_working_dir(),
+            auto_start: true,
+            health_check_interval_secs: default_health_check_interval(),
+            restart_on_failure: true,
+            max_restarts: 3,
+        }
+    }
+}
+
 // ── Channels ─────────────────────────────────────────────────────
 
 /// Top-level channel configurations (`[channels_config]` section).
@@ -2846,6 +2961,7 @@ impl Default for Config {
             identity: IdentityConfig::default(),
             cost: CostConfig::default(),
             peripherals: PeripheralsConfig::default(),
+            deploy: DeployConfig::default(),
             agents: HashMap::new(),
             hardware: HardwareConfig::default(),
             query_classification: QueryClassificationConfig::default(),
@@ -3998,6 +4114,7 @@ default_temperature = 0.7
             identity: IdentityConfig::default(),
             cost: CostConfig::default(),
             peripherals: PeripheralsConfig::default(),
+            deploy: DeployConfig::default(),
             agents: HashMap::new(),
             hardware: HardwareConfig::default(),
         };
@@ -4167,6 +4284,7 @@ tool_dispatcher = "xml"
             identity: IdentityConfig::default(),
             cost: CostConfig::default(),
             peripherals: PeripheralsConfig::default(),
+            deploy: DeployConfig::default(),
             agents: HashMap::new(),
             hardware: HardwareConfig::default(),
         };

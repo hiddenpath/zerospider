@@ -58,6 +58,7 @@ mod rag {
 mod config;
 mod cron;
 mod daemon;
+mod deploy;
 mod doctor;
 mod gateway;
 mod hardware;
@@ -409,6 +410,22 @@ Examples:
     Config {
         #[command(subcommand)]
         config_command: ConfigCommands,
+    },
+    /// Deploy ZeroClaw to remote servers
+    #[command(long_about = "\
+Deploy ZeroClaw to remote servers via SSH.
+
+Manage remote deployments with support for direct binary deployment, Docker containers, and systemd services. Includes health checks, status monitoring, rollback, and configuration sync capabilities.
+
+Examples:
+  zeroclaw deploy deploy --server prod-001
+  zeroclaw deploy status --server prod-001
+  zeroclaw deploy health-check --server prod-001
+  zeroclaw deploy list
+  zeroclaw deploy rollback --server prod-001")]
+    Deploy {
+        #[command(subcommand)]
+        deploy_command: deploy::DeployCommands,
     },
 
     /// Generate shell completion script to stdout
@@ -1024,6 +1041,9 @@ async fn main() -> Result<()> {
             peripherals::handle_command(peripheral_command.clone(), &config).await
         }
 
+        Commands::Deploy { deploy_command } => {
+            deploy::cli::handle_command(deploy_command, &config).await
+        }
         Commands::Config { config_command } => match config_command {
             ConfigCommands::Schema => {
                 let schema = schemars::schema_for!(config::Config);
