@@ -11,14 +11,14 @@ use anyhow::Result;
 use async_trait::async_trait;
 use serde_json::json;
 use std::sync::{Arc, Mutex};
-use zeroclaw::agent::agent::Agent;
-use zeroclaw::agent::dispatcher::NativeToolDispatcher;
-use zeroclaw::config::MemoryConfig;
-use zeroclaw::memory;
-use zeroclaw::memory::Memory;
-use zeroclaw::observability::{NoopObserver, Observer};
-use zeroclaw::providers::{ChatRequest, ChatResponse, Provider, ToolCall};
-use zeroclaw::tools::{Tool, ToolResult};
+use zerospider::agent::agent::Agent;
+use zerospider::agent::dispatcher::NativeToolDispatcher;
+use zerospider::config::MemoryConfig;
+use zerospider::memory;
+use zerospider::memory::Memory;
+use zerospider::observability::{NoopObserver, Observer};
+use zerospider::providers::{ChatRequest, ChatResponse, Provider, ToolCall};
+use zerospider::tools::{Tool, ToolResult};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mock infrastructure

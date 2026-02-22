@@ -57,6 +57,7 @@ mod rag {
 }
 mod config;
 mod cron;
+mod cost;
 mod daemon;
 mod deploy;
 mod doctor;
