@@ -52,7 +52,8 @@ impl DeploymentTarget {
 pub struct DeploymentConfig {
     pub name: String,
     pub version: String,
-    pub binary_path: PathBuf,
+    pub local_binary: PathBuf,   // Local binary path (auto-detected)
+    pub binary_path: PathBuf,     // Remote binary path
     pub config_path: Option<PathBuf>,
     pub env_vars: HashMap<String, String>,
     pub working_dir: PathBuf,
@@ -60,21 +61,29 @@ pub struct DeploymentConfig {
     pub health_check_interval: Duration,
     pub restart_on_failure: bool,
     pub max_restarts: u32,
+    pub use_sudo: bool,            // Whether to use sudo for remote commands
 }
 
 impl Default for DeploymentConfig {
     fn default() -> Self {
+        // Auto-detect current binary path
+        let local_binary = std::env::current_exe()
+            .and_then(|p| p.canonicalize())
+            .unwrap_or_else(|_| PathBuf::from("./target/release/zerospider"));
+        
         Self {
-            name: "zeroclaw".to_string(),
+            name: "zerospider".to_string(),
             version: "latest".to_string(),
-            binary_path: PathBuf::from("/usr/local/bin/zeroclaw"),
+            local_binary,
+            binary_path: PathBuf::from("/usr/local/bin/zerospider"),
             config_path: None,
             env_vars: HashMap::new(),
-            working_dir: PathBuf::from("/opt/zeroclaw"),
+            working_dir: PathBuf::from("/opt/zerospider"),
             auto_start: true,
             health_check_interval: Duration::from_secs(30),
             restart_on_failure: true,
             max_restarts: 3,
+            use_sudo: true,  // Default to true for systemd/docker modes
         }
     }
 }
@@ -219,6 +228,7 @@ impl RemoteDeployer {
         target: &DeploymentTarget,
         config: &DeploymentConfig,
     ) -> Vec<DeploymentStep> {
+        let sudo_prefix = if config.use_sudo { "sudo" } else { "" };
         match self.mode {
             DeploymentMode::Direct => vec![
                 DeploymentStep::new(
@@ -230,7 +240,7 @@ impl RemoteDeployer {
                     "upload_binary",
                     format!(
                         "scp {} {}@{}:{}",
-                        config.binary_path.display(),
+                        config.local_binary.display(),
                         target.user,
                         target.host,
                         config.binary_path.display()
@@ -269,7 +279,7 @@ impl RemoteDeployer {
                     "upload_binary",
                     format!(
                         "scp {} {}@{}:{}",
-                        config.binary_path.display(),
+                        config.local_binary.display(),
                         target.user,
                         target.host,
                         config.binary_path.display()

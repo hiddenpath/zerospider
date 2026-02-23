@@ -2298,6 +2298,10 @@ pub struct DeploymentSettingsConfig {
     /// Maximum restart attempts.
     #[serde(default)]
     pub max_restarts: u32,
+
+            /// Whether to use sudo for remote commands (systemd/docker require root).
+            #[serde(default)]
+            pub use_sudo: bool,
 }
 
 fn default_deploy_binary_path() -> String {
@@ -2332,6 +2336,7 @@ impl Default for DeploymentSettingsConfig {
             health_check_interval_secs: default_health_check_interval(),
             restart_on_failure: true,
             max_restarts: 3,
+            use_sudo: true,
         }
     }
 }

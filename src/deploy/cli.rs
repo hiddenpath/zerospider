@@ -106,9 +106,15 @@ fn create_deployment_config(
     settings: &crate::config::DeploymentSettingsConfig,
     version: &str,
 ) -> DeploymentConfig {
+    // Auto-detect local binary path
+    let local_binary = std::env::current_exe()
+        .and_then(|p| p.canonicalize())
+        .unwrap_or_else(|_| PathBuf::from("./target/release/zerospider"));
+    
     DeploymentConfig {
-        name: "zeroclaw".to_string(),
+        name: "zerospider".to_string(),
         version: version.to_string(),
+        local_binary,
         binary_path: PathBuf::from(&settings.binary_path),
         config_path: settings.config_path.as_ref().map(|p| PathBuf::from(p)),
         env_vars: HashMap::new(),
@@ -117,6 +123,7 @@ fn create_deployment_config(
         health_check_interval: std::time::Duration::from_secs(settings.health_check_interval_secs),
         restart_on_failure: settings.restart_on_failure,
         max_restarts: settings.max_restarts,
+        use_sudo: settings.use_sudo,
     }
 }
 
