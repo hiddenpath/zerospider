@@ -233,7 +233,7 @@ impl RemoteDeployer {
             DeploymentMode::Direct => vec![
                 DeploymentStep::new(
                     "create_dir",
-                    format!("mkdir -p {}", config.working_dir.display()),
+                    format!("{} mkdir -p {}", sudo_prefix, config.working_dir.display()),
                 )
                 .with_rollback(format!("rm -rf {}", config.working_dir.display())),
                 DeploymentStep::new(
@@ -248,13 +248,14 @@ impl RemoteDeployer {
                 ),
                 DeploymentStep::new(
                     "make_executable",
-                    format!("chmod +x {}", config.binary_path.display()),
+                    format!("{} chmod +x {}", sudo_prefix, config.binary_path.display()),
                 ),
                 DeploymentStep::new(
                     "start_service",
                     format!(
-                        "cd {} && {} &",
+                        "cd {} && {} {} &",
                         config.working_dir.display(),
+                        sudo_prefix,
                         config.binary_path.display()
                     ),
                 ),
@@ -262,14 +263,14 @@ impl RemoteDeployer {
             DeploymentMode::Docker => vec![
                 DeploymentStep::new(
                     "pull_image",
-                    format!("docker pull zeroclaw:{}", config.version),
+                    format!("docker pull zerospider:{}", config.version),
                 ),
-                DeploymentStep::new("stop_existing", "docker stop zeroclaw || true".to_string()),
-                DeploymentStep::new("remove_existing", "docker rm zeroclaw || true".to_string()),
+                DeploymentStep::new("stop_existing", "docker stop zerospider || true".to_string()),
+                DeploymentStep::new("remove_existing", "docker rm zerospider || true".to_string()),
                 DeploymentStep::new(
                     "run_container",
                     format!(
-                        "docker run -d --name zeroclaw -p 8080:8080 zeroclaw:{}",
+                        "docker run -d --name zerospider -p 8080:8080 zerospider:{}",
                         config.version
                     ),
                 ),
@@ -285,9 +286,9 @@ impl RemoteDeployer {
                         config.binary_path.display()
                     ),
                 ),
-                DeploymentStep::new("install_service", "systemctl daemon-reload".to_string()),
-                DeploymentStep::new("enable_service", "systemctl enable zeroclaw".to_string()),
-                DeploymentStep::new("start_service", "systemctl start zeroclaw".to_string()),
+                DeploymentStep::new("install_service", format!("{} systemctl daemon-reload", sudo_prefix).to_string()),
+                DeploymentStep::new("enable_service", format!("{} systemctl enable zerospider", sudo_prefix).to_string()),
+                DeploymentStep::new("start_service", format!("{} systemctl start zerospider", sudo_prefix).to_string()),
             ],
         }
     }
@@ -335,7 +336,7 @@ impl RemoteDeployer {
             .ok_or_else(|| anyhow::anyhow!("Target not found: {}", target_id))?;
 
         let result = self
-            .execute_raw(target, "pgrep -x zeroclaw > /dev/null")
+            .execute_raw(target, "pgrep -x zerospider > /dev/null")
             .await;
 
         if let Some(status) = self.statuses.get_mut(target_id) {
@@ -353,13 +354,13 @@ impl RemoteDeployer {
             .ok_or_else(|| anyhow::anyhow!("Target not found: {}", target_id))?;
 
         let rollback_steps = match self.mode {
-            DeploymentMode::Direct => vec!["pkill -x zeroclaw || true", "rm -rf /opt/zeroclaw"],
+            DeploymentMode::Direct => vec!["pkill -x zerospider || true", "rm -rf /opt/zerospider"],
             DeploymentMode::Docker => {
-                vec!["docker stop zeroclaw || true", "docker rm zeroclaw || true"]
+                vec!["docker stop zerospider || true", "docker rm zerospider || true"]
             }
             DeploymentMode::Systemd => vec![
-                "systemctl stop zeroclaw || true",
-                "systemctl disable zeroclaw || true",
+                "systemctl stop zerospider || true",
+                "systemctl disable zerospider || true",
             ],
         };
 
@@ -403,7 +404,7 @@ mod tests {
     #[test]
     fn test_deployment_config_default() {
         let config = DeploymentConfig::default();
-        assert_eq!(config.name, "zeroclaw");
+        assert_eq!(config.name, "zerospider");
         assert!(config.auto_start);
         assert!(config.restart_on_failure);
     }
