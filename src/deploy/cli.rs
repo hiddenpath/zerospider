@@ -17,7 +17,7 @@ pub async fn handle_command(
 
     match deploy_command {
         crate::deploy::DeployCommands::Deploy { server } => {
-            handle_deploy(&server, &targets, &deploy_config).await
+            handle_deploy(&server, &targets, deploy_config.clone()).await
         }
         crate::deploy::DeployCommands::Status { server } => handle_status(&server, &targets).await,
         crate::deploy::DeployCommands::HealthCheck { server } => {
@@ -28,10 +28,13 @@ pub async fn handle_command(
             handle_rollback(&server, &targets).await
         }
         crate::deploy::DeployCommands::Update { server, version } => {
-            handle_update(&server, version, &targets, &deploy_config).await
+            handle_update(&server, version, &targets, deploy_config.clone()).await
         }
         crate::deploy::DeployCommands::SyncConfig { server } => {
             handle_sync_config(&server, config).await
+        }
+        crate::deploy::DeployCommands::Validate { server } => {
+            handle_validate(&server, &targets, deploy_config.clone()).await
         }
     }
 }
@@ -110,7 +113,7 @@ fn create_deployment_config(
     let local_binary = std::env::current_exe()
         .and_then(|p| p.canonicalize())
         .unwrap_or_else(|_| PathBuf::from("./target/release/zerospider"));
-    
+
     DeploymentConfig {
         name: "zerospider".to_string(),
         version: version.to_string(),
@@ -131,7 +134,7 @@ fn create_deployment_config(
 async fn handle_deploy(
     server_id: &str,
     targets: &[crate::deploy::remote::DeploymentTarget],
-    deploy_config: &crate::config::DeployConfig,
+    deploy_config: crate::config::DeployConfig,
 ) -> Result<()> {
     let target = find_target(server_id, targets)?;
 
@@ -145,7 +148,7 @@ async fn handle_deploy(
     deployer.set_config(dep_config);
 
     deployer
-        .deploy(server_id, "zeroclaw")
+        .deploy(server_id, "zerospider")
         .await
         .context("Deployment failed")?;
 
@@ -272,7 +275,7 @@ async fn handle_update(
     server_id: &str,
     version: Option<String>,
     targets: &[crate::deploy::remote::DeploymentTarget],
-    deploy_config: &crate::config::DeployConfig,
+    deploy_config: crate::config::DeployConfig,
 ) -> Result<()> {
     let target = find_target(server_id, targets)?;
 
@@ -300,7 +303,7 @@ async fn handle_update(
     deployer.set_config(dep_config);
 
     deployer
-        .deploy(server_id, "zeroclaw")
+        .deploy(server_id, "zerospider")
         .await
         .context("Update failed")?;
 
@@ -327,4 +330,232 @@ fn find_target<'a>(
         .iter()
         .find(|t| t.id == server_id)
         .ok_or_else(|| anyhow::anyhow!("Deployment target '{server_id}' not found"))
+}
+
+/// Handle validate command.
+async fn handle_validate(
+    server_id: &str,
+    targets: &[crate::deploy::remote::DeploymentTarget],
+    deploy_config: crate::config::DeployConfig,
+) -> Result<()> {
+    let target = find_target(server_id, targets)?;
+
+    info!("Validating deployment readiness for {}...", server_id);
+
+    println!(
+        "🔍 Validating deployment readiness for {} ({})...",
+        server_id, target.host
+    );
+    println!();
+
+    let mode = parse_deployment_mode(&deploy_config.settings.mode);
+
+    let mut has_errors = false;
+    let mut has_warnings = false;
+
+    // Test SSH connectivity
+    println!("1️⃣ Testing SSH connectivity...");
+    match test_ssh_connection(&target).await {
+        Ok(_) => println!("   ✅ SSH connection successful"),
+        Err(e) => {
+            println!("   ❌ SSH connection failed: {}", e);
+            has_errors = true;
+        }
+    }
+    println!();
+
+    // Check directory write permissions
+    println!("2️⃣ Checking directory permissions...");
+    let test_dirs = [
+        &deploy_config.settings.binary_path,
+        &deploy_config.settings.working_dir,
+    ];
+    for (i, _dir) in test_dirs.iter().enumerate() {
+        let full_dir = test_dirs[i];
+        match test_directory_permission(&target, full_dir).await {
+            Ok(_) => println!("   ✅ Can write to {}", full_dir),
+            Err(e) => {
+                println!("   ⚠️  Cannot write to {} (may need sudo): {}", full_dir, e);
+                has_warnings = true;
+            }
+        }
+    }
+    println!();
+
+    // Check mode-specific requirements
+    println!("3️⃣ Checking mode-specific requirements ({:?})...", mode);
+    let mode_clone = mode.clone();
+    match mode_clone {
+        DeploymentMode::Docker => match test_docker_available(&target).await {
+            Ok(()) => println!("   ✅ Docker is available"),
+            Err(e) => {
+                println!("   ❌ Docker check failed: {}", e);
+                has_errors = true;
+            }
+        },
+        DeploymentMode::Systemd => {
+            match test_systemctl_available(&target).await {
+                Ok(()) => println!("   ✅ systemctl is available"),
+                Err(e) => {
+                    println!("   ⚠️  systemctl check failed (may need sudo): {}", e);
+                    has_warnings = true;
+                }
+            }
+            if deploy_config.settings.use_sudo {
+                println!("   ℹ️  use_sudo is enabled - systemctl commands will use sudo");
+            }
+        }
+        _ => {
+            println!("   ✅ No mode-specific requirements for Direct mode");
+        }
+    }
+    println!();
+
+    // Check sudo configuration
+    if deploy_config.settings.use_sudo {
+        println!("4️⃣ Checking sudo configuration...");
+        let mut deployer = RemoteDeployer::new(mode.clone());
+        deployer.register_target(target.clone());
+        match test_sudo_available(&target).await {
+            Ok(()) => println!("   ✅ sudo is available"),
+            Err(e) => {
+                println!("   ⚠️  sudo check failed: {}", e);
+                has_warnings = true;
+            }
+        }
+        println!();
+    }
+
+    // Print summary
+    println!("📋 Validation Summary:");
+    if !has_errors && !has_warnings {
+        println!("   ✅ All checks passed! Ready to deploy.");
+        println!();
+        println!("   To deploy, run: deploy deploy --server {}", server_id);
+    } else if has_errors && !has_warnings {
+        println!("   ❌ Validation failed with errors.");
+        println!("   Please fix the errors above before deploying.");
+    } else if !has_errors && has_warnings {
+        println!("   ⚠️  Validation passed with warnings.");
+        println!("   Deployment should work, but some issues may require manual intervention.");
+        println!();
+        println!(
+            "   To deploy despite warnings, run: deploy deploy --server {}",
+            server_id
+        );
+    } else {
+        println!("   ❌ Validation failed with both errors and warnings.");
+        println!("   Please fix the issues above before deploying.");
+    }
+
+    if has_errors {
+        bail!("Validation failed with errors");
+    }
+
+    Ok(())
+}
+
+/// Test SSH connectivity.
+async fn test_ssh_connection(target: &crate::deploy::remote::DeploymentTarget) -> Result<()> {
+    let output = tokio::process::Command::new("ssh")
+        .arg("-o")
+        .arg("StrictHostKeyChecking=no")
+        .arg("-o")
+        .arg("ConnectTimeout=5")
+        .arg("-p")
+        .arg(target.port.to_string())
+        .arg(format!("{}@{}", target.user, target.host))
+        .arg("echo 'SSH connection successful'")
+        .output()
+        .await
+        .context("SSH execution failed")?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        bail!("SSH command failed: {}", stderr);
+    }
+
+    Ok(())
+}
+
+/// Test directory write permission.
+async fn test_directory_permission(
+    target: &crate::deploy::remote::DeploymentTarget,
+    dir: &str,
+) -> Result<()> {
+    let test_file = format!("{}/.test_write_{}", dir, std::process::id());
+
+    // Try to create a temp file
+    let _ = tokio::process::Command::new("ssh")
+        .arg("-o")
+        .arg("StrictHostKeyChecking=no")
+        .arg("-p")
+        .arg(target.port.to_string())
+        .arg(format!("{}@{}", target.user, target.host))
+        .arg(format!("touch {} && rm -f {}", test_file, test_file))
+        .output()
+        .await
+        .context("Directory permission test failed")?;
+
+    Ok(())
+}
+
+/// Test if Docker is available.
+async fn test_docker_available(target: &crate::deploy::remote::DeploymentTarget) -> Result<()> {
+    let output = tokio::process::Command::new("ssh")
+        .arg("-o")
+        .arg("StrictHostKeyChecking=no")
+        .arg("-p")
+        .arg(target.port.to_string())
+        .arg(format!("{}@{}", target.user, target.host))
+        .arg("docker --version")
+        .output()
+        .await
+        .context("Docker availability check failed")?;
+
+    if !output.status.success() {
+        bail!("Docker is not installed or user lacks permissions");
+    }
+
+    Ok(())
+}
+
+/// Test if systemctl is available.
+async fn test_systemctl_available(target: &crate::deploy::remote::DeploymentTarget) -> Result<()> {
+    let output = tokio::process::Command::new("ssh")
+        .arg("-o")
+        .arg("StrictHostKeyChecking=no")
+        .arg("-p")
+        .arg(target.port.to_string())
+        .arg(format!("{}@{}", target.user, target.host))
+        .arg("systemctl --version")
+        .output()
+        .await
+        .context("systemctl availability check failed")?;
+
+    if !output.status.success() {
+        bail!("systemctl is not installed or user lacks permissions");
+    }
+
+    Ok(())
+}
+
+/// Test if sudo is available.
+async fn test_sudo_available(target: &crate::deploy::remote::DeploymentTarget) -> Result<()> {
+    let output = tokio::process::Command::new("ssh")
+        .arg("-o")
+        .arg("StrictHostKeyChecking=no")
+        .arg("-p")
+        .arg(target.port.to_string())
+        .arg(format!("{}@{}", target.user, target.host))
+        .arg("sudo -n true")
+        .output()
+        .await
+        .context("sudo availability check failed")?;
+
+    if !output.status.success() {
+        bail!("sudo is not configured or user lacks permissions");
+    }
+
+    Ok(())
 }

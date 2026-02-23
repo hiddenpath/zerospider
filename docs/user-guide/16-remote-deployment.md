@@ -17,10 +17,41 @@ ZeroSpider provides controlled remote deployment capabilities, allowing you to d
 ### Building with Remote Deploy Feature
 
 ```bash
-cargo build --features remote-deploy
-# or
 cargo build --release --features remote-deploy
 ```
+
+### Bootstrap Remote Servers
+
+**Important**: Before deploying, run the bootstrap script ONCE on each remote server to prepare the environment:
+
+```bash
+# Option 1: Run directly on remote server
+ssh user@remote-server
+wget https://raw.githubusercontent.com/hiddenpath/zerospider/main/bootstrap.sh
+chmod +x bootstrap.sh
+sudo bash bootstrap.sh
+```
+
+```bash
+# Option 2: Copy from local and run
+scp bootstrap.sh user@remote-server:/tmp/
+ssh user@remote-server 'sudo bash /tmp/bootstrap.sh'
+```
+
+#### What Bootstrap Script Does
+
+The bootstrap script (`bootstrap.sh`) automatically:
+
+1. **Creates deploy user** (if not exists)
+2. **Sets up directories**: `/opt/zerospider`, `/opt/zerospider/logs`
+3. **Sets file permissions**: Ownership for deploy user on all directories
+4. **Configures sudoers**: Passwordless sudo for deploy user for:
+   - systemctl commands (daemon-reload, enable, start, stop, restart)
+   - Directory creation and ownership
+   - Binary installation
+5. **Adds to docker group** (if Docker is installed)
+6. **Creates systemd service file**: `/etc/systemd/system/zerospider.service`
+7. **Creates marker file**: `/opt/zerospider/.bootstrap-complete` to prevent re-running
 
 ### Configuration
 
@@ -45,7 +76,7 @@ ssh_key = "~/.ssh/deploy_key"
 labels = ["env:staging", "region:us-west"]
 
 [deploy.settings]
-mode = "direct"
+mode = "systemd"                     # Options: direct, docker, systemd
 binary_path = "/usr/local/bin/zerospider"
 working_dir = "/opt/zerospider"
 config_path = "/opt/zerospider/config.toml"
@@ -53,6 +84,7 @@ auto_start = true
 health_check_interval_secs = 30
 restart_on_failure = true
 max_restarts = 3
+use_sudo = true                       # Use sudo for systemctl/docker commands
 ```
 
 ### Deploying to a Server
@@ -66,6 +98,9 @@ zerospider deploy status --server prod-001
 
 # Run a health check
 zerospider deploy health-check --server prod-001
+
+# Validate deployment readiness before deploying (NEW)
+zerospider deploy validate --server prod-001
 ```
 
 ## Commands
@@ -178,6 +213,14 @@ This uploads your local `~/.zerospider/config.toml` to the remote server with th
 
 ## Deployment Modes
 
+### Mode Comparison
+
+| Mode | Requirements | Setup | Advantages |
+|------|-------------|-------|-----------|
+| **Direct** | Write access to `/usr/local/bin/`, `/opt/zerospider` | Run bootstrap.sh | Simple, no runtime dependencies |
+| **Docker** | Docker daemon, deploy user in docker group | Run bootstrap.sh | Containerized, easy version management |
+| **Systemd** | systemctl, sudo configured in bootstrap.sh | Run bootstrap.sh | Auto-restart, managed service, logs in journald |
+
 ### Direct Mode
 
 Deploys ZeroSpider as a standalone binary process:
@@ -265,8 +308,18 @@ ls -la ~/.ssh/id_ed25519  # Should be -rw------- (600)
 
 ### Permission Issues
 
-If ZeroSpider can't write to the working directory:
+**Symptom**: Permission denied when creating directories or installing binary:
 
+```
+Permission denied: mkdir -p /opt/zerospider
+```
+
+**Solution**: Run bootstrap.sh on remote server:
+```bash
+ssh deploy@remote-server 'sudo bash < /path/to/bootstrap.sh'
+```
+
+If bootstrap script was already run, ensure directories exist:
 ```bash
 # SSH into the server
 ssh deploy@192.168.1.100
@@ -278,6 +331,59 @@ ls -la /opt/zerospider
 sudo chown -R deploy:deploy /opt/zerospider
 ```
 
+### systemctl Requires Permissions
+
+**Symptom**:
+```
+Permission denied: systemctl daemon-reload
+```
+
+**Solution 1** (Recommended): Run bootstrap.sh (includes sudoers config)
+
+**Solution 2** (Manual):
+```bash
+# On remote server, run as root:
+echo "deploy ALL=(ALL) NOPASSWD: /usr/bin/systemctl daemon-reload, \
+    /usr/bin/systemctl enable zerospider, \
+    /usr/bin/systemctl start zerospider, \
+    /usr/bin/systemctl stop zerospider, \
+    /usr/bin/systemctl restart zerospider" | \
+    sudo tee /etc/sudoers.d/deployer-zerospider
+sudo chmod 0440 /etc/sudoers.d/deployer-zerospider
+```
+
+### Docker Permission Denied
+
+**Symptom**:
+```
+permission denied while trying to connect to the Docker daemon socket
+```
+
+**Solution**: Add deploy user to docker group:
+```bash
+ssh root@remote-server 'usermod -aG docker deploy'
+# User must re-login for changes to take effect:
+ssh deploy@remote-server  # Logout and login again
+```
+
+### Docker: Unknown Image
+
+**Symptom**:
+```
+Error: pull access denied for zerospider:latest
+```
+
+**Solution 1** (if using private registry): Configure Docker credentials
+
+**Solution 2** (if using public hub): Build custom image first:
+```bash
+# On local machine:
+docker build -t zerospider:latest .
+# Tag and push to registry
+docker tag zerospider:latest registry.example.com/zerospider:latest
+docker push registry.example.com/zerospider:latest
+```
+
 ### Service Not Starting
 
 If the service starts but immediately crashes:
@@ -287,10 +393,14 @@ If the service starts but immediately crashes:
 pgrep zerospider
 
 # Check systemd logs (if using systemd mode)
+sudo systemctl status zerospider
 sudo journalctl -u zerospider -n 50
 
 # Check logs in working directory
-tail -f /opt/zerospider/zerospider.log
+tail -f /opt/zerospider/logs/zerospider.log
+
+# Manual test - run binary directly
+cd /opt/zerospider && /usr/local/bin/zerospider
 ```
 
 ## Advanced Configuration

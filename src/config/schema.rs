@@ -2299,9 +2299,9 @@ pub struct DeploymentSettingsConfig {
     #[serde(default)]
     pub max_restarts: u32,
 
-            /// Whether to use sudo for remote commands (systemd/docker require root).
-            #[serde(default)]
-            pub use_sudo: bool,
+    /// Whether to use sudo for remote commands (systemd/docker require root).
+    #[serde(default)]
+    pub use_sudo: bool,
 }
 
 fn default_deploy_binary_path() -> String {

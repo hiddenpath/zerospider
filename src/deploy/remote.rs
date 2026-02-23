@@ -52,8 +52,8 @@ impl DeploymentTarget {
 pub struct DeploymentConfig {
     pub name: String,
     pub version: String,
-    pub local_binary: PathBuf,   // Local binary path (auto-detected)
-    pub binary_path: PathBuf,     // Remote binary path
+    pub local_binary: PathBuf, // Local binary path (auto-detected)
+    pub binary_path: PathBuf,  // Remote binary path
     pub config_path: Option<PathBuf>,
     pub env_vars: HashMap<String, String>,
     pub working_dir: PathBuf,
@@ -61,7 +61,7 @@ pub struct DeploymentConfig {
     pub health_check_interval: Duration,
     pub restart_on_failure: bool,
     pub max_restarts: u32,
-    pub use_sudo: bool,            // Whether to use sudo for remote commands
+    pub use_sudo: bool, // Whether to use sudo for remote commands
 }
 
 impl Default for DeploymentConfig {
@@ -70,7 +70,7 @@ impl Default for DeploymentConfig {
         let local_binary = std::env::current_exe()
             .and_then(|p| p.canonicalize())
             .unwrap_or_else(|_| PathBuf::from("./target/release/zerospider"));
-        
+
         Self {
             name: "zerospider".to_string(),
             version: "latest".to_string(),
@@ -83,7 +83,7 @@ impl Default for DeploymentConfig {
             health_check_interval: Duration::from_secs(30),
             restart_on_failure: true,
             max_restarts: 3,
-            use_sudo: true,  // Default to true for systemd/docker modes
+            use_sudo: true, // Default to true for systemd/docker modes
         }
     }
 }
@@ -265,8 +265,14 @@ impl RemoteDeployer {
                     "pull_image",
                     format!("docker pull zerospider:{}", config.version),
                 ),
-                DeploymentStep::new("stop_existing", "docker stop zerospider || true".to_string()),
-                DeploymentStep::new("remove_existing", "docker rm zerospider || true".to_string()),
+                DeploymentStep::new(
+                    "stop_existing",
+                    "docker stop zerospider || true".to_string(),
+                ),
+                DeploymentStep::new(
+                    "remove_existing",
+                    "docker rm zerospider || true".to_string(),
+                ),
                 DeploymentStep::new(
                     "run_container",
                     format!(
@@ -286,9 +292,18 @@ impl RemoteDeployer {
                         config.binary_path.display()
                     ),
                 ),
-                DeploymentStep::new("install_service", format!("{} systemctl daemon-reload", sudo_prefix).to_string()),
-                DeploymentStep::new("enable_service", format!("{} systemctl enable zerospider", sudo_prefix).to_string()),
-                DeploymentStep::new("start_service", format!("{} systemctl start zerospider", sudo_prefix).to_string()),
+                DeploymentStep::new(
+                    "install_service",
+                    format!("{} systemctl daemon-reload", sudo_prefix).to_string(),
+                ),
+                DeploymentStep::new(
+                    "enable_service",
+                    format!("{} systemctl enable zerospider", sudo_prefix).to_string(),
+                ),
+                DeploymentStep::new(
+                    "start_service",
+                    format!("{} systemctl start zerospider", sudo_prefix).to_string(),
+                ),
             ],
         }
     }
@@ -356,7 +371,10 @@ impl RemoteDeployer {
         let rollback_steps = match self.mode {
             DeploymentMode::Direct => vec!["pkill -x zerospider || true", "rm -rf /opt/zerospider"],
             DeploymentMode::Docker => {
-                vec!["docker stop zerospider || true", "docker rm zerospider || true"]
+                vec![
+                    "docker stop zerospider || true",
+                    "docker rm zerospider || true",
+                ]
             }
             DeploymentMode::Systemd => vec![
                 "systemctl stop zerospider || true",

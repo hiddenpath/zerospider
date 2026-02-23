@@ -657,14 +657,16 @@ async fn handle_dashboard_api(State(state): State<AppState>) -> impl IntoRespons
         .cost_tracker
         .as_ref()
         .and_then(|ct| ct.get_summary().ok())
-        .map(|s| serde_json::json!({
-            "session_cost_usd": s.session_cost_usd,
-            "daily_cost_usd": s.daily_cost_usd,
-            "monthly_cost_usd": s.monthly_cost_usd,
-            "total_tokens": s.total_tokens,
-            "request_count": s.request_count,
-            "by_model": s.by_model,
-        }));
+        .map(|s| {
+            serde_json::json!({
+                "session_cost_usd": s.session_cost_usd,
+                "daily_cost_usd": s.daily_cost_usd,
+                "monthly_cost_usd": s.monthly_cost_usd,
+                "total_tokens": s.total_tokens,
+                "request_count": s.request_count,
+                "by_model": s.by_model,
+            })
+        });
 
     let body = serde_json::json!({
         "health": health,

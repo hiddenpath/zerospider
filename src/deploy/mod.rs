@@ -52,4 +52,10 @@ pub enum DeployCommands {
         #[arg(short, long)]
         server: String,
     },
+    /// Validate deployment readiness for a server
+    Validate {
+        /// Server ID to validate
+        #[arg(short, long)]
+        server: String,
+    },
 }

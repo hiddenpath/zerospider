@@ -56,8 +56,8 @@ mod rag {
     pub use zerospider::rag::*;
 }
 mod config;
-mod cron;
 mod cost;
+mod cron;
 mod daemon;
 mod deploy;
 mod doctor;
