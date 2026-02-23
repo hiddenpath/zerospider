@@ -1,5 +1,6 @@
 use super::traits::{Channel, ChannelMessage, SendMessage};
 use async_trait::async_trait;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Slack channel — polls conversations.history via Web API
 pub struct SlackChannel {
@@ -48,6 +49,12 @@ impl SlackChannel {
 
     /// Resolve the thread identifier for inbound Slack messages.
     /// Replies carry `thread_ts` (root thread id); top-level messages only have `ts`.
+    fn slack_now_ts() -> String {
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default();
+        format!("{}.{:06}", now.as_secs(), now.subsec_micros())
+    }
     fn inbound_thread_ts(msg: &serde_json::Value, ts: &str) -> Option<String> {
         msg.get("thread_ts")
             .and_then(|t| t.as_str())
@@ -110,8 +117,10 @@ impl Channel for SlackChannel {
             .ok_or_else(|| anyhow::anyhow!("Slack channel_id required for listening"))?;
 
         let bot_user_id = self.get_bot_user_id().await.unwrap_or_default();
-        let mut last_ts = String::new();
-
+        // Bootstrap cursor with current timestamp to prevent historical replay
+        let now_ts = Self::slack_now_ts();
+        tracing::debug!("Slack: initialized cursor at {} to prevent replay", now_ts);
+        let mut last_ts = now_ts;
         tracing::info!("Slack channel listening on #{channel_id}...");
 
         loop {
