@@ -122,7 +122,7 @@ webpki-roots = "1.0.7"
 
 # email
 lettre = { version = "0.11.21", default-features = false, features = ["builder", "smtp-transport", "rustls-tls"] }
-mail-parser = "0.11.2"
+mail-parser = "0.11.3"
 async-imap = { version = "0.11",features = ["runtime-tokio"], default-features = false }
 
 # HTTP server (gateway) — replaces raw TCP for proper HTTP/1.1 compliance
@@ -144,7 +144,7 @@ tokio-serial = { version = "5", default-features = false, optional = true }
 
 # ai-lib-rust — Protocol-driven AI API client (crates.io, optional).
 # Version matrix: see docs/ai-lib-migration.md (target 0.9.x per migration plan).
-ai-lib-rust = { version = "0.9.4", optional = true, features = ["embeddings", "batch", "telemetry"] }
+ai-lib-rust = { version = "0.9.6", optional = true, features = ["embeddings", "batch", "telemetry"] }
 async-stream = { version = "0.3", optional = true }
 serde_yaml = { version = "0.9", optional = true }
 
